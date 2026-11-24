@@ -41,7 +41,12 @@ class Page(db.Model):
    
 
     # Relationships
-    clients = db.relationship('Client', backref='page', lazy=True, cascade="all, delete-orphan")
+    leads = db.relationship(
+    'Lead',
+    backref='page',
+    lazy=True,
+    cascade="all, delete-orphan"
+    )
 
 
 
