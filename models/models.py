@@ -32,53 +32,41 @@ class Platform(db.Model):
 # Composite primary key for page_id and platform_id
 class Page(db.Model):
     __tablename__ = 'pages'
+
     __table_args__ = (
         PrimaryKeyConstraint('page_id', 'platform_id'),
     )
-    page_id = db.Column(db.String(100), nullable=False) # Page ID used to identify the page (from Facebook Developer)
-    token = db.Column(db.Text, nullable=False) # Access token for page permissions (from Facebook Developer)
-    platform_id = db.Column(db.Integer, db.ForeignKey('platforms.id'), nullable=False) # Foreign Key linking to Platform
-   
+
+    page_id = db.Column(db.String(100), nullable=False)
+    token = db.Column(db.Text, nullable=False)
+
+    platform_id = db.Column(
+        db.Integer,
+        db.ForeignKey('platforms.id'),
+        nullable=False
+    )
 
     # Relationships
-    leads = db.relationship(
-    'Lead',
-    backref='page',
-    lazy=True,
-    cascade="all, delete-orphan"
+    clients = db.relationship(
+        'Client',
+        backref='page',
+        lazy=True,
+        cascade="all, delete-orphan"
     )
 
 
 
-class Lead(db.Model):
-    __tablename__ = 'leads'
+
+class Client(db.Model):
+    __tablename__ = 'clients'
+
     __table_args__ = (
-        PrimaryKeyConstraint('sender_id', 'page_id', 'platform_id'),
+        PrimaryKeyConstraint(
+            'sender_id', 'page_id', 'platform_id'
+        ),
         ForeignKeyConstraint(
             ['page_id', 'platform_id'],
             ['pages.page_id', 'pages.platform_id']
-        ),
-    )
-    sender_id = db.Column(db.String(100), nullable=False) # Sender ID received from Facebook or WAHA request
-    page_id = db.Column(db.String(100), nullable=False) # Foreign Key linking to Page
-    platform_id = db.Column(db.Integer, nullable=False) # Foreign Key linking to Platform
-    summary = db.Column(db.Text, nullable=True) # Chat summary (used for agent memory)
-    last_bot_reply = db.Column(db.Text, nullable=True) # Last bot reply (used for agent memory)
-    chat_history = db.relationship(
-        'ChatHistory',
-        back_populates='lead',
-        uselist=False,
-        cascade='all, delete-orphan'
-    )
-
-class ChatHistory(db.Model):
-    __tablename__ = 'chat_histories'
-
-    __table_args__ = (
-        PrimaryKeyConstraint('sender_id', 'page_id', 'platform_id'),
-        ForeignKeyConstraint(
-            ['sender_id', 'page_id', 'platform_id'],
-            ['leads.sender_id', 'leads.page_id', 'leads.platform_id']
         ),
     )
 
@@ -86,12 +74,49 @@ class ChatHistory(db.Model):
     page_id = db.Column(db.String(100), nullable=False)
     platform_id = db.Column(db.Integer, nullable=False)
 
-    chat_history = db.Column(db.JSON, nullable=False, default=list)
+    summary = db.Column(db.Text, nullable=True)
+    last_bot_reply = db.Column(db.Text, nullable=True)
 
-    lead = db.relationship(
-        'Lead',
+    # Relationships
+    chat_history = db.relationship(
+        'ChatHistory',
+        back_populates='client',
+        uselist=False,
+        cascade='all, delete-orphan'
+    )
+
+
+class ChatHistory(db.Model):
+    __tablename__ = 'chat_histories'
+
+    __table_args__ = (
+        PrimaryKeyConstraint(
+            'sender_id', 'page_id', 'platform_id'
+        ),
+        ForeignKeyConstraint(
+            ['sender_id', 'page_id', 'platform_id'],
+            ['clients.sender_id',
+             'clients.page_id',
+             'clients.platform_id']
+        ),
+    )
+
+    sender_id = db.Column(db.String(100), nullable=False)
+    page_id = db.Column(db.String(100), nullable=False)
+    platform_id = db.Column(db.Integer, nullable=False)
+
+    chat_history = db.Column(
+        db.JSON,
+        nullable=False,
+        default=list
+    )
+
+    # Relationships
+    client = db.relationship(
+        'Client',
         back_populates='chat_history'
     )
+
     
 class Maintenance(db.Model):
     __tablename__ = 'maintenance'
